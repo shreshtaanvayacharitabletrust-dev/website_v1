@@ -29,6 +29,23 @@ npm run build
 
 Production output is generated in `dist/`.
 
+## Deploy to Cloudflare Pages
+
+This project is a static React/Vite site and is ready for Cloudflare Pages.
+
+Recommended Pages settings:
+
+- Framework preset: `Vite`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Root directory: `/`
+
+SPA routing support is handled by:
+
+- `public/_redirects`
+
+This makes deep links like `/who-we-are` or `/contact` resolve correctly on Cloudflare Pages.
+
 ## Edit content
 
 Most editable website content is centralized in:
