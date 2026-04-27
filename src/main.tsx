@@ -15,6 +15,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
     <ClerkProvider
       afterSignOutUrl="/internal-admin"
       publishableKey={clerkPublishableKey}
+      signInFallbackRedirectUrl="/internal-admin/dashboard"
+      signInUrl="/internal-admin"
+      signUpFallbackRedirectUrl="/internal-admin/dashboard"
     >
       {children}
     </ClerkProvider>

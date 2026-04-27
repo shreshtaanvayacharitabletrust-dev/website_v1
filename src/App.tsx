@@ -25,24 +25,30 @@ export default function App() {
       <StaticRedirectHandler />
       <ScrollToTop />
       <Routes>
-        <Route path="/internal-admin">
-          <Route index element={<AdminAuthPage />} />
-          <Route element={<AdminLayout />}>
-            <Route path="dashboard" element={<AdminDashboardPage />} />
-            <Route path="content" element={<AdminContentPage />} />
-            <Route path="media" element={<AdminMediaPage />} />
-            <Route path="inquiries" element={<AdminInquiriesPage />} />
-            <Route
-              path="volunteers-partners"
-              element={<AdminEngagementPage />}
-            />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-            <Route
-              path="*"
-              element={<Navigate replace to="/internal-admin/dashboard" />}
-            />
-          </Route>
+        <Route path="/internal-admin/*" element={<AdminAuthPage />} />
+        <Route element={<AdminLayout />}>
+          <Route
+            path="/internal-admin/dashboard"
+            element={<AdminDashboardPage />}
+          />
+          <Route
+            path="/internal-admin/content"
+            element={<AdminContentPage />}
+          />
+          <Route path="/internal-admin/media" element={<AdminMediaPage />} />
+          <Route
+            path="/internal-admin/inquiries"
+            element={<AdminInquiriesPage />}
+          />
+          <Route
+            path="/internal-admin/volunteers-partners"
+            element={<AdminEngagementPage />}
+          />
+          <Route path="/internal-admin/users" element={<AdminUsersPage />} />
+          <Route
+            path="/internal-admin/settings"
+            element={<AdminSettingsPage />}
+          />
         </Route>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
