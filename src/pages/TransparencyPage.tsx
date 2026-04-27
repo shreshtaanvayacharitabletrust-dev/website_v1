@@ -1,31 +1,29 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "../components/SectionHeading";
-import { coreStatements, transparencyNotes } from "../content/siteContent";
+import { useSiteContent } from "../content/SiteContentProvider";
 
 export default function TransparencyPage() {
+  const { content } = useSiteContent();
+  const { coreStatements, transparencyNotes, transparencyPage } = content;
+
   return (
     <>
       <section className="page-hero">
         <div className="container page-hero-grid">
           <div className="animate-in">
-            <p className="eyebrow">Transparency</p>
-            <h1>Our commitment to accountability, clarity, and community trust</h1>
-            <p className="page-hero-intro">
-              This page is a placeholder foundation for the trust&apos;s future public
-              reporting. It reflects the same commitment already present in the
-              website content: meaningful and responsible impact.
-            </p>
-            <Link className="button button-accent" to="/contact">
-              Ask a Question
-            </Link>
+            <p className="eyebrow">{transparencyPage.hero.eyebrow}</p>
+            <h1>{transparencyPage.hero.heading}</h1>
+            <p className="page-hero-intro">{transparencyPage.hero.intro}</p>
+            {transparencyPage.hero.ctaLabel && transparencyPage.hero.ctaPath ? (
+              <Link className="button button-accent" to={transparencyPage.hero.ctaPath}>
+                {transparencyPage.hero.ctaLabel}
+              </Link>
+            ) : null}
           </div>
 
           <div className="highlight-panel animate-in">
-            <h2>Version one note</h2>
-            <p>
-              Formal public reports, governance details, and financial disclosures can
-              be added here once the trust finalizes the materials it wants to publish.
-            </p>
+            <h2>{transparencyPage.highlightTitle}</h2>
+            <p>{transparencyPage.highlightText}</p>
           </div>
         </div>
       </section>
@@ -33,9 +31,9 @@ export default function TransparencyPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            eyebrow="What This Page Will Hold"
-            title="A clear home for future public trust materials"
-            intro="The goal is to make transparency visible early, even before the full reporting structure is ready."
+            eyebrow={transparencyPage.notesSection.eyebrow}
+            intro={transparencyPage.notesSection.intro}
+            title={transparencyPage.notesSection.title}
           />
 
           <div className="card-grid card-grid-three">
@@ -57,9 +55,9 @@ export default function TransparencyPage() {
         <div className="container">
           <SectionHeading
             centered
-            eyebrow="Anchor Statements"
-            title="Transparency should stay connected to the trust's purpose"
-            intro="These existing statements remain the foundation for how future accountability information should be framed."
+            eyebrow={transparencyPage.anchorSection.eyebrow}
+            intro={transparencyPage.anchorSection.intro}
+            title={transparencyPage.anchorSection.title}
           />
 
           <div className="card-grid card-grid-three">

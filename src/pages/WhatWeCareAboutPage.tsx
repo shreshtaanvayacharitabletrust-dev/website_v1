@@ -1,27 +1,24 @@
 import SectionHeading from "../components/SectionHeading";
 import IconSymbol from "../components/IconSymbol";
-import { focusAreas, values } from "../content/siteContent";
+import { useSiteContent } from "../content/SiteContentProvider";
 
 export default function WhatWeCareAboutPage() {
+  const { content } = useSiteContent();
+  const { focusAreas, values, whatWeCareAboutPage } = content;
+
   return (
     <>
       <section className="page-hero">
         <div className="container page-hero-grid">
           <div className="animate-in">
-            <p className="eyebrow">What We Care About</p>
-            <h1>Five focus areas, one shared purpose</h1>
-            <p className="page-hero-intro">
-              The trust's priorities connect education, care, environmental
-              awareness, and community well-being into one compassionate direction.
-            </p>
+            <p className="eyebrow">{whatWeCareAboutPage.hero.eyebrow}</p>
+            <h1>{whatWeCareAboutPage.hero.heading}</h1>
+            <p className="page-hero-intro">{whatWeCareAboutPage.hero.intro}</p>
           </div>
 
           <div className="highlight-panel animate-in">
-            <h2>Shared thread</h2>
-            <p>
-              Every focus area is connected by the same belief: people deserve the
-              opportunity to grow, live with dignity, and contribute meaningfully.
-            </p>
+            <h2>{whatWeCareAboutPage.highlightTitle}</h2>
+            <p>{whatWeCareAboutPage.highlightText}</p>
           </div>
         </div>
       </section>
@@ -29,9 +26,9 @@ export default function WhatWeCareAboutPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            eyebrow="Focus Areas"
-            title="What the trust chooses to hold close"
-            intro="Each focus area expands the one-line description from the source document into a fuller website explanation without inventing new programs."
+            eyebrow={whatWeCareAboutPage.areasSection.eyebrow}
+            intro={whatWeCareAboutPage.areasSection.intro}
+            title={whatWeCareAboutPage.areasSection.title}
           />
 
           <div className="card-grid card-grid-two">
@@ -59,9 +56,9 @@ export default function WhatWeCareAboutPage() {
         <div className="container">
           <SectionHeading
             centered
-            eyebrow="Connected Values"
-            title="Care is strongest when values stay visible"
-            intro="The trust's values reinforce the focus areas and prevent the website from feeling like a list of disconnected causes."
+            eyebrow={whatWeCareAboutPage.valuesSection.eyebrow}
+            intro={whatWeCareAboutPage.valuesSection.intro}
+            title={whatWeCareAboutPage.valuesSection.title}
           />
 
           <div className="values-row">
@@ -77,4 +74,3 @@ export default function WhatWeCareAboutPage() {
     </>
   );
 }
-

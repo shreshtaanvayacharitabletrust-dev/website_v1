@@ -1,34 +1,89 @@
 import { FormEvent, useState } from "react";
 import SectionHeading from "../components/SectionHeading";
-import {
-  contactFormDefaults,
-  contactMethods,
-  socialPlaceholders,
-} from "../content/siteContent";
+import { useSiteContent } from "../content/SiteContentProvider";
+import { buildMailtoUrl, submitInquiry } from "../lib/submissions";
 
 export default function ContactPage() {
+  const { content } = useSiteContent();
+  const {
+    contactFormDefaults,
+    contactMethods,
+    contactPage,
+    socialLinks,
+    submissionSettings,
+  } = content;
   const [formValues, setFormValues] = useState({
     name: "",
     email: "",
+    phone: "",
     subject: contactFormDefaults.subject,
     message: "",
   });
+  const [submissionState, setSubmissionState] = useState<{
+    state: "idle" | "submitting" | "success" | "error";
+    message: string;
+  }>({
+    state: "idle",
+    message: "",
+  });
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const body = [
+    const bodyLines = [
       `Name: ${formValues.name || "Not provided"}`,
       `Email: ${formValues.email || "Not provided"}`,
+      `Phone: ${formValues.phone || "Not provided"}`,
       "",
-      formValues.message || "Hello, I would like to learn more about the trust.",
-    ].join("\n");
+      formValues.message || contactFormDefaults.fallbackMessage,
+    ];
 
-    const mailtoUrl = `mailto:hello@shresthaanvaya.org?subject=${encodeURIComponent(
-      formValues.subject || contactFormDefaults.subject,
-    )}&body=${encodeURIComponent(body)}`;
+    if (!submissionSettings.databaseEnabled) {
+      window.location.href = buildMailtoUrl({
+        recipientEmail: contactFormDefaults.recipientEmail,
+        subject: formValues.subject || contactFormDefaults.subject,
+        bodyLines,
+      });
 
-    window.location.href = mailtoUrl;
+      return;
+    }
+
+    setSubmissionState({
+      state: "submitting",
+      message: "",
+    });
+
+    try {
+      await submitInquiry({
+        kind: "contact",
+        name: formValues.name,
+        email: formValues.email,
+        phone: formValues.phone,
+        subject: formValues.subject,
+        message: formValues.message,
+        sourcePage: "/contact",
+      });
+
+      setFormValues({
+        name: "",
+        email: "",
+        phone: "",
+        subject: contactFormDefaults.subject,
+        message: "",
+      });
+      setSubmissionState({
+        state: "success",
+        message: contactPage.successMessage,
+      });
+    } catch (error) {
+      setSubmissionState({
+        state: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The inquiry could not be submitted right now.",
+      });
+    }
   };
 
   return (
@@ -36,20 +91,14 @@ export default function ContactPage() {
       <section className="page-hero">
         <div className="container page-hero-grid">
           <div className="animate-in">
-            <p className="eyebrow">Contact</p>
-            <h1>Let's connect and create meaningful change together</h1>
-            <p className="page-hero-intro">
-              This first website version uses placeholder contact details so the
-              trust can launch now and swap in confirmed public information later.
-            </p>
+            <p className="eyebrow">{contactPage.hero.eyebrow}</p>
+            <h1>{contactPage.hero.heading}</h1>
+            <p className="page-hero-intro">{contactPage.hero.intro}</p>
           </div>
 
           <div className="highlight-panel animate-in">
-            <h2>What happens here</h2>
-            <p>
-              The form below opens a prefilled email draft. It avoids a backend
-              dependency while still giving visitors a useful way to reach out.
-            </p>
+            <h2>{contactPage.highlightTitle}</h2>
+            <p>{contactPage.highlightText}</p>
           </div>
         </div>
       </section>
@@ -57,9 +106,9 @@ export default function ContactPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            eyebrow="Contact Details"
-            title="Placeholder public information for version one"
-            intro="These details are intentionally easy to replace once the trust confirms its official channels."
+            eyebrow={contactPage.detailsSection.eyebrow}
+            intro={contactPage.detailsSection.intro}
+            title={contactPage.detailsSection.title}
           />
 
           <div className="card-grid card-grid-three">
@@ -88,9 +137,9 @@ export default function ContactPage() {
         <div className="container two-column-layout contact-layout">
           <div>
             <SectionHeading
-              eyebrow="Reach Out"
-              title="Send an inquiry"
-              intro="Use this form to draft an email about volunteering, partnerships, support, or general questions."
+              eyebrow={contactPage.formSection.eyebrow}
+              intro={contactPage.formSection.intro}
+              title={contactPage.formSection.title}
             />
 
             <form className="contact-form" onSubmit={handleSubmit}>
@@ -113,12 +162,28 @@ export default function ContactPage() {
                 Email
                 <input
                   name="email"
+                  required
                   type="email"
                   value={formValues.email}
                   onChange={(event) =>
                     setFormValues((current) => ({
                       ...current,
                       email: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+
+              <label>
+                Phone
+                <input
+                  name="phone"
+                  type="tel"
+                  value={formValues.phone}
+                  onChange={(event) =>
+                    setFormValues((current) => ({
+                      ...current,
+                      phone: event.target.value,
                     }))
                   }
                 />
@@ -154,24 +219,45 @@ export default function ContactPage() {
                 />
               </label>
 
-              <button className="button button-primary" type="submit">
-                Open Email Draft
+              <button
+                className="button button-primary"
+                disabled={submissionState.state === "submitting"}
+                type="submit"
+              >
+                {submissionState.state === "submitting"
+                  ? "Submitting..."
+                  : contactPage.submitButtonLabel}
               </button>
+
+              {submissionState.message ? (
+                <p
+                  className={`form-feedback ${
+                    submissionState.state === "error"
+                      ? "form-feedback-error"
+                      : "form-feedback-success"
+                  }`}
+                >
+                  {submissionState.message}
+                </p>
+              ) : null}
             </form>
           </div>
 
           <div className="surface-card note-card">
-            <h3>Social channels</h3>
-            <p>
-              Social profiles are not published yet, so version one keeps them as
-              clear placeholders instead of broken links.
-            </p>
+            <h3>{contactPage.socialTitle}</h3>
+            <p>{contactPage.socialIntro}</p>
             <div className="social-placeholder-row">
-              {socialPlaceholders.map((label) => (
-                <span className="social-badge" key={label}>
-                  {label}
-                </span>
-              ))}
+              {socialLinks.map((item) =>
+                item.href ? (
+                  <a className="social-badge" href={item.href} key={item.label}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <span className="social-badge" key={item.label}>
+                    {item.label}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -179,4 +265,3 @@ export default function ContactPage() {
     </>
   );
 }
-

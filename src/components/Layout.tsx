@@ -1,32 +1,88 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { brand, contactMethods, navigation, socialPlaceholders } from "../content/siteContent";
+import { useSiteContent } from "../content/SiteContentProvider";
+import { buildMailtoUrl, submitInquiry } from "../lib/submissions";
 import BrandLogo from "./BrandLogo";
 import SocialGlyph from "./SocialGlyph";
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<{
+    state: "idle" | "submitting" | "success" | "error";
+    message: string;
+  }>({
+    state: "idle",
+    message: "",
+  });
   const location = useLocation();
+  const { content } = useSiteContent();
+  const {
+    brand,
+    contactFormDefaults,
+    contactMethods,
+    layout,
+    navigation,
+    socialLinks,
+    submissionSettings,
+  } = content;
 
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  const handleNewsletterSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const body = [
-      "Hello,",
-      "",
-      "Please add the following email to newsletter updates:",
-      newsletterEmail || "[email to be shared]",
-    ].join("\n");
+    if (!newsletterEmail) {
+      return;
+    }
 
-    window.location.href = `mailto:hello@shresthaanvaya.org?subject=Newsletter%20signup&body=${encodeURIComponent(
-      body,
-    )}`;
+    if (!submissionSettings.databaseEnabled) {
+      window.location.href = buildMailtoUrl({
+        recipientEmail: contactFormDefaults.recipientEmail,
+        subject: layout.newsletterSubject,
+        bodyLines: [
+          "Hello,",
+          "",
+          "Please add the following email to newsletter updates:",
+          newsletterEmail,
+        ],
+      });
+
+      return;
+    }
+
+    setNewsletterStatus({
+      state: "submitting",
+      message: "",
+    });
+
+    try {
+      await submitInquiry({
+        kind: "newsletter",
+        email: newsletterEmail,
+        subject: layout.newsletterSubject,
+        sourcePage: "footer",
+      });
+
+      setNewsletterEmail("");
+      setNewsletterStatus({
+        state: "success",
+        message: layout.newsletterSuccessMessage,
+      });
+    } catch (error) {
+      setNewsletterStatus({
+        state: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The signup could not be sent right now.",
+      });
+    }
   };
+
+  const footerContactMethods = contactMethods.slice(0, 2);
 
   return (
     <div className="site-shell">
@@ -57,8 +113,8 @@ export default function Layout() {
             </nav>
 
             <div className="header-actions">
-              <Link className="button button-header" to="/get-involved">
-                Donate Now
+              <Link className="button button-header" to={layout.donateButtonPath}>
+                {layout.donateButtonLabel}
               </Link>
               <button
                 aria-expanded={menuOpen}
@@ -91,8 +147,8 @@ export default function Layout() {
                   <small>{item.description}</small>
                 </NavLink>
               ))}
-              <Link className="button button-header mobile-cta" to="/get-involved">
-                Donate Now
+              <Link className="button button-header mobile-cta" to={layout.donateButtonPath}>
+                {layout.donateButtonLabel}
               </Link>
             </nav>
           </div>
@@ -114,7 +170,7 @@ export default function Layout() {
               </div>
 
               <div>
-                <h3>Quick Links</h3>
+                <h3>{layout.quickLinksTitle}</h3>
                 <ul className="footer-links">
                   {navigation
                     .filter((item) => item.label !== "Home")
@@ -127,17 +183,34 @@ export default function Layout() {
               </div>
 
               <div>
-                <h3>Stay Connected</h3>
-                <p className="footer-section-copy">Follow us for updates on our latest work.</p>
-                <div className="footer-social-row" aria-label="Social media placeholders">
-                  {socialPlaceholders.map((label) => (
-                    <span className="social-icon-badge" key={label} title={`${label} coming soon`}>
-                      <SocialGlyph name={label} />
-                    </span>
-                  ))}
+                <h3>{layout.stayConnectedTitle}</h3>
+                <p className="footer-section-copy">{layout.stayConnectedCopy}</p>
+                <div className="footer-social-row" aria-label="Social media links">
+                  {socialLinks.map((socialLink) =>
+                    socialLink.href ? (
+                      <a
+                        className="social-icon-badge"
+                        href={socialLink.href}
+                        key={socialLink.label}
+                        rel="noreferrer"
+                        target="_blank"
+                        title={socialLink.label}
+                      >
+                        <SocialGlyph name={socialLink.label} />
+                      </a>
+                    ) : (
+                      <span
+                        className="social-icon-badge"
+                        key={socialLink.label}
+                        title={`${socialLink.label} coming soon`}
+                      >
+                        <SocialGlyph name={socialLink.label} />
+                      </span>
+                    ),
+                  )}
                 </div>
                 <ul className="footer-links footer-links-contact">
-                  {contactMethods.slice(0, 2).map((method) => (
+                  {footerContactMethods.map((method) => (
                     <li key={method.label}>
                       <span>{method.label}</span>
                       {method.href ? (
@@ -151,31 +224,48 @@ export default function Layout() {
               </div>
 
               <div>
-                <h3>Newsletter</h3>
-                <p className="footer-section-copy">
-                  Stay updated with our initiatives and stories.
-                </p>
+                <h3>{layout.newsletterTitle}</h3>
+                <p className="footer-section-copy">{layout.newsletterIntro}</p>
                 <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
                   <input
                     aria-label="Email address for newsletter signup"
-                    placeholder="Enter your email"
+                    placeholder={layout.newsletterInputPlaceholder}
                     type="email"
                     value={newsletterEmail}
                     onChange={(event) => setNewsletterEmail(event.target.value)}
                   />
-                  <button className="button button-newsletter" type="submit">
-                    Subscribe
+                  <button
+                    className="button button-newsletter"
+                    disabled={newsletterStatus.state === "submitting"}
+                    type="submit"
+                  >
+                    {newsletterStatus.state === "submitting"
+                      ? "Submitting..."
+                      : layout.newsletterButtonLabel}
                   </button>
                 </form>
+                {newsletterStatus.message ? (
+                  <p
+                    className={`form-feedback ${
+                      newsletterStatus.state === "error"
+                        ? "form-feedback-error"
+                        : "form-feedback-success"
+                    }`}
+                  >
+                    {newsletterStatus.message}
+                  </p>
+                ) : null}
               </div>
             </div>
 
             <div className="footer-bottom">
               <p>© 2025 {brand.fullName}. All rights reserved.</p>
               <div className="footer-meta-links">
-                <Link to="/transparency">Transparency</Link>
-                <Link to="/contact">Privacy Policy</Link>
-                <Link to="/contact">Terms &amp; Conditions</Link>
+                {layout.footerMetaLinks.map((item) => (
+                  <Link key={item.label} to={item.path}>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>

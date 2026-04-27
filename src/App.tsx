@@ -5,6 +5,7 @@ import StaticRedirectHandler from "./components/StaticRedirectHandler";
 import ContactPage from "./pages/ContactPage";
 import GetInvolvedPage from "./pages/GetInvolvedPage";
 import HomePage from "./pages/HomePage";
+import InternalAdminPage from "./pages/InternalAdminPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import WhatWeCareAboutPage from "./pages/WhatWeCareAboutPage";
 import WhatWeDoPage from "./pages/WhatWeDoPage";
@@ -16,6 +17,7 @@ export default function App() {
       <StaticRedirectHandler />
       <ScrollToTop />
       <Routes>
+        <Route path="/internal-admin" element={<InternalAdminPage />} />
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="/who-we-are" element={<WhoWeArePage />} />

@@ -1,42 +1,24 @@
 import { Link } from "react-router-dom";
 import SectionHeading from "../components/SectionHeading";
-import { initiatives, values } from "../content/siteContent";
-
-const operatingNotes = [
-  {
-    title: "Community-Driven",
-    text: "The mission explicitly centers community-driven efforts, so every initiative should stay close to real people and local participation.",
-  },
-  {
-    title: "Responsible",
-    text: "The trust's commitment emphasizes responsibility, which makes clarity and follow-through central to how the work is presented.",
-  },
-  {
-    title: "Sustainable",
-    text: "Environmental awareness and sustainability are part of the trust's values, so progress should aim to be thoughtful and lasting.",
-  },
-];
+import { useSiteContent } from "../content/SiteContentProvider";
 
 export default function WhatWeDoPage() {
+  const { content } = useSiteContent();
+  const { initiatives, values, whatWeDoPage } = content;
+
   return (
     <>
       <section className="page-hero">
         <div className="container page-hero-grid">
           <div className="animate-in">
-            <p className="eyebrow">What We Do</p>
-            <h1>Initiatives designed to turn compassion into practical action</h1>
-            <p className="page-hero-intro">
-              The current website content defines four initiative streams that
-              translate the trust's mission into clear areas of work.
-            </p>
+            <p className="eyebrow">{whatWeDoPage.hero.eyebrow}</p>
+            <h1>{whatWeDoPage.hero.heading}</h1>
+            <p className="page-hero-intro">{whatWeDoPage.hero.intro}</p>
           </div>
 
           <div className="highlight-panel animate-in">
-            <h2>Working principle</h2>
-            <p>
-              Each initiative reflects the same direction: meaningful impact shaped
-              by care, responsibility, and community participation.
-            </p>
+            <h2>{whatWeDoPage.highlightTitle}</h2>
+            <p>{whatWeDoPage.highlightText}</p>
           </div>
         </div>
       </section>
@@ -44,9 +26,9 @@ export default function WhatWeDoPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
-            eyebrow="Initiatives"
-            title="The trust's current program framing"
-            intro="These initiative descriptions stay faithful to the source draft while giving the website enough depth to feel complete and navigable."
+            eyebrow={whatWeDoPage.initiativesSection.eyebrow}
+            intro={whatWeDoPage.initiativesSection.intro}
+            title={whatWeDoPage.initiativesSection.title}
           />
 
           <div className="card-grid card-grid-two">
@@ -72,13 +54,13 @@ export default function WhatWeDoPage() {
         <div className="container">
           <SectionHeading
             centered
-            eyebrow="How We Approach Impact"
-            title="A consistent way of working matters as much as the work itself"
-            intro="Because this is an early NGO website, the strongest signal is not scale. It is clarity, responsibility, and alignment with the trust's values."
+            eyebrow={whatWeDoPage.operatingSection.eyebrow}
+            intro={whatWeDoPage.operatingSection.intro}
+            title={whatWeDoPage.operatingSection.title}
           />
 
           <div className="card-grid card-grid-three">
-            {operatingNotes.map((note, index) => (
+            {whatWeDoPage.operatingNotes.map((note, index) => (
               <article
                 className="surface-card statement-card animate-in"
                 key={note.title}
@@ -99,8 +81,8 @@ export default function WhatWeDoPage() {
           </div>
 
           <div className="center-cta">
-            <Link className="button button-primary" to="/get-involved">
-              Explore Ways to Help
+            <Link className="button button-primary" to={whatWeDoPage.ctaPath}>
+              {whatWeDoPage.ctaLabel}
             </Link>
           </div>
         </div>
@@ -108,4 +90,3 @@ export default function WhatWeDoPage() {
     </>
   );
 }
-

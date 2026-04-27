@@ -1,35 +1,19 @@
 import { Link } from "react-router-dom";
 import IconSymbol from "../components/IconSymbol";
-import { coreStatements, focusAreas, hero, initiatives, values } from "../content/siteContent";
+import { useSiteContent } from "../content/SiteContentProvider";
 
-const homeCtas = [
-  {
-    title: "Get Involved",
-    text: "Support. Volunteer. Partner.",
-    ctaLabel: "Join Us",
-    path: "/get-involved",
-    themeClass: "action-card-teal",
-  },
-  {
-    title: "Our Commitment",
-    text:
-      "We are dedicated to creating meaningful and responsible impact in the communities we serve.",
-    ctaLabel: "Learn More",
-    path: "/who-we-are",
-    themeClass: "action-card-gold",
-  },
-  {
-    title: "Contact Us",
-    text: "Let's connect and create change together.",
-    ctaLabel: "Reach Out",
-    path: "/contact",
-    themeClass: "action-card-light",
-  },
-];
-
-const valueIcons = ["compassion", "integrity", "community", "sustainability", "responsibility"] as const;
+const valueIcons = [
+  "compassion",
+  "integrity",
+  "community",
+  "sustainability",
+  "responsibility",
+] as const;
 
 export default function HomePage() {
+  const { content } = useSiteContent();
+  const { coreStatements, focusAreas, hero, homePage, initiatives, values } = content;
+
   return (
     <>
       <section className="hero-section">
@@ -37,12 +21,16 @@ export default function HomePage() {
           <div className="home-hero-card animate-in">
             <div className="hero-grid">
               <div className="hero-copy">
+                <p className="eyebrow">{hero.eyebrow}</p>
                 <h1>{hero.heading}</h1>
                 <p className="hero-intro">{hero.subtext}</p>
 
                 <div className="hero-actions">
                   <Link className="button button-accent" to={hero.primaryCtaPath}>
                     {hero.primaryCtaLabel}
+                  </Link>
+                  <Link className="button button-soft" to={hero.secondaryCtaPath}>
+                    {hero.secondaryCtaLabel}
                   </Link>
                 </div>
               </div>
@@ -81,14 +69,14 @@ export default function HomePage() {
         <div className="container">
           <div className="overview-card">
             <article className="overview-column animate-in">
-              <h2>{coreStatements[0].title}</h2>
-              <p>{coreStatements[0].text}</p>
+              <h2>{coreStatements[0]?.title}</h2>
+              <p>{coreStatements[0]?.text}</p>
               <span className="mini-divider" />
             </article>
 
             <article className="overview-column animate-in" style={{ animationDelay: "80ms" }}>
-              <h2>{coreStatements[1].title}</h2>
-              <p>{coreStatements[1].text}</p>
+              <h2>{coreStatements[1]?.title}</h2>
+              <p>{coreStatements[1]?.text}</p>
               <span className="mini-divider" />
             </article>
 
@@ -97,9 +85,9 @@ export default function HomePage() {
               style={{ animationDelay: "160ms" }}
             >
               <div className="overview-heading-row">
-                <h2>Our Initiatives</h2>
+                <h2>{homePage.overviewInitiativesTitle}</h2>
                 <Link
-                  aria-label="View initiative details"
+                  aria-label={homePage.overviewInitiativesAriaLabel}
                   className="round-arrow-link"
                   to="/initiatives"
                 >
@@ -124,7 +112,7 @@ export default function HomePage() {
       <section className="section home-tight-section">
         <div className="container">
           <div className="action-grid">
-            {homeCtas.map((item, index) => (
+            {homePage.actionCards.map((item, index) => (
               <article
                 className={`home-action-card ${item.themeClass} animate-in`}
                 key={item.title}
@@ -133,7 +121,9 @@ export default function HomePage() {
                 <h2>{item.title}</h2>
                 <p>{item.text}</p>
                 <Link
-                  className={`button ${item.themeClass === "action-card-light" ? "button-accent" : "button-soft"}`}
+                  className={`button ${
+                    item.themeClass === "action-card-light" ? "button-accent" : "button-soft"
+                  }`}
                   to={item.path}
                 >
                   {item.ctaLabel}
@@ -149,7 +139,7 @@ export default function HomePage() {
           <div className="values-strip animate-in">
             {values.map((value, index) => (
               <article className="value-inline" key={value.name}>
-                <IconSymbol name={valueIcons[index]} />
+                <IconSymbol name={valueIcons[index] || "community"} />
                 <span>{value.name}</span>
               </article>
             ))}
@@ -159,23 +149,13 @@ export default function HomePage() {
 
       <section className="section">
         <div className="container interior-preview-note">
-          <p>
-            Explore the interior pages for detailed focus areas, initiatives,
-            involvement opportunities, transparency notes, and contact information.
-          </p>
+          <p>{homePage.interiorPreviewText}</p>
           <div className="pill-row">
-            <Link className="text-link-pill" to="/who-we-are">
-              Who We Are
-            </Link>
-            <Link className="text-link-pill" to="/what-we-care-about">
-              What We Care About
-            </Link>
-            <Link className="text-link-pill" to="/transparency">
-              Transparency
-            </Link>
-            <Link className="text-link-pill" to="/contact">
-              Contact Us
-            </Link>
+            {homePage.interiorPreviewLinks.map((item) => (
+              <Link className="text-link-pill" key={item.path} to={item.path}>
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
