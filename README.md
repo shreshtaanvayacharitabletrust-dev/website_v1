@@ -5,10 +5,11 @@ Responsive NGO website built with `React`, `TypeScript`, and `Vite`.
 It now supports:
 
 - `Clerk` for admin authentication
-- `Directus` as the website content backend
 - protected `/internal-admin/*` admin workspace
+- `Cloudflare D1` as the CMS and submissions database
+- `Cloudflare R2` for uploaded media
+- optional `Workers KV` cache for published content
 - `Cloudflare Pages Functions` for API routes
-- `Cloudflare D1` for public form submissions
 
 ## Run locally
 
@@ -60,7 +61,7 @@ The public website reads content from:
 
 - `/api/site-content` on Cloudflare Pages Functions
 
-That endpoint proxies a Directus collection named `site_content`.
+That endpoint now serves the published site content record stored in Cloudflare D1.
 
 Local fallback content still lives in:
 
@@ -90,11 +91,11 @@ Setup details are in:
 - `src/admin/`: Clerk auth flow and admin shell
 - `src/components/`: shared UI building blocks
 - `src/content/`: CMS content types, fallback data, provider
-- `src/lib/`: Directus and inquiry API clients
+- `src/lib/`: Cloudflare CMS and inquiry API clients
 - `src/pages/`: homepage and interior pages
 - `functions/api/`: Cloudflare Pages Functions
 - `functions/_lib/`: shared server auth helpers
-- `cloudflare/d1/schema.sql`: inquiry storage schema
+- `cloudflare/d1/schema.sql`: D1 schema for content, media metadata, and inquiries
 - `src/styles.css`: visual system and responsive styles
 - `public/404.html`: SPA fallback for static hosting
 
@@ -102,6 +103,5 @@ Setup details are in:
 
 - Real NGO logo and photos are not available yet.
 - Contact details are placeholders and should be replaced later.
-- Directus is hosted separately from the public site.
 - Admin authentication is handled by Clerk.
 - `ADMIN_ALLOWED_EMAILS` should be configured in production if sign-up should not automatically allow admin access.

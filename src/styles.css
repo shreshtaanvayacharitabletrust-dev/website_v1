@@ -1252,6 +1252,48 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-form-grid label,
+.admin-code-label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-form-grid input,
+.admin-code-editor {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(34, 52, 52, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+}
+
+.admin-code-editor {
+  min-height: 36rem;
+  margin-top: 0.55rem;
+  font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.admin-help-copy,
+.admin-copy-break {
+  color: var(--muted);
+}
+
+.admin-copy-break {
+  overflow-wrap: anywhere;
+}
+
 .site-footer {
   padding: 1.4rem 0 1.8rem;
 }
@@ -1416,6 +1458,7 @@ textarea:focus-visible {
   .admin-card-grid,
   .admin-link-grid,
   .admin-filter-grid,
+  .admin-form-grid,
   .admin-media-hero {
     grid-template-columns: 1fr;
   }

@@ -1,4 +1,5 @@
 import type { SiteContent } from "../content/siteContent";
+import { mergeSiteContentWithDefaults } from "./siteContentApi";
 
 export type InquiryStatus = "new" | "reviewing" | "closed";
 
@@ -25,9 +26,30 @@ export interface AdminSession {
     joinedAt: string | null;
     lastSignInAt: string | null;
   };
-  directusUrl: string;
   allowlistEnabled: boolean;
   allowedEmails: string[];
+  cmsProvider: string;
+  databaseConfigured: boolean;
+  mediaConfigured: boolean;
+  cacheConfigured: boolean;
+  mediaBaseUrl: string;
+}
+
+export interface AdminContentRecord {
+  persisted: boolean;
+  content: SiteContent;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export interface AdminMediaAsset {
+  key: string;
+  title: string;
+  mimeType: string;
+  sizeBytes: number;
+  url: string;
+  createdAt: string;
+  uploadedBy: string | null;
 }
 
 export interface DashboardSummary {
@@ -86,6 +108,122 @@ export async function fetchAdminInquiries(getToken: TokenGetter): Promise<AdminI
   const payload = (await response.json()) as { items?: AdminInquiry[] };
 
   return payload.items || [];
+}
+
+export async function fetchAdminContent(
+  getToken: TokenGetter,
+): Promise<AdminContentRecord> {
+  const response = await authorizedFetch("/api/admin/content", getToken);
+  const payload = (await response.json()) as {
+    persisted?: boolean;
+    content?: unknown;
+    updatedAt?: string | null;
+    updatedBy?: string | null;
+  };
+
+  return {
+    persisted: payload.persisted === true,
+    content: mergeSiteContentWithDefaults(payload.content),
+    updatedAt:
+      typeof payload.updatedAt === "string" ? payload.updatedAt : null,
+    updatedBy:
+      typeof payload.updatedBy === "string" ? payload.updatedBy : null,
+  };
+}
+
+export async function updateAdminContent(args: {
+  getToken: TokenGetter;
+  content: unknown;
+}): Promise<AdminContentRecord> {
+  const response = await authorizedFetch("/api/admin/content", args.getToken, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: args.content,
+    }),
+  });
+  const payload = (await response.json()) as {
+    persisted?: boolean;
+    content?: unknown;
+    updatedAt?: string | null;
+    updatedBy?: string | null;
+  };
+
+  return {
+    persisted: payload.persisted === true,
+    content: mergeSiteContentWithDefaults(payload.content),
+    updatedAt:
+      typeof payload.updatedAt === "string" ? payload.updatedAt : null,
+    updatedBy:
+      typeof payload.updatedBy === "string" ? payload.updatedBy : null,
+  };
+}
+
+export async function fetchAdminMedia(
+  getToken: TokenGetter,
+): Promise<AdminMediaAsset[]> {
+  const response = await authorizedFetch("/api/admin/media", getToken);
+  const payload = (await response.json()) as { items?: AdminMediaAsset[] };
+
+  return payload.items || [];
+}
+
+export async function uploadAdminMedia(args: {
+  getToken: TokenGetter;
+  file: File;
+  title?: string;
+}): Promise<AdminMediaAsset> {
+  const token = await args.getToken();
+
+  if (!token) {
+    throw new Error("Your admin session is no longer active.");
+  }
+
+  const formData = new FormData();
+
+  formData.set("file", args.file);
+
+  if (args.title?.trim()) {
+    formData.set("title", args.title.trim());
+  }
+
+  const response = await fetch("/api/admin/media", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  const payload = (await response.json()) as { item?: AdminMediaAsset };
+
+  if (!payload.item) {
+    throw new Error("Upload completed but no media record was returned.");
+  }
+
+  return payload.item;
+}
+
+export async function deleteAdminMedia(args: {
+  getToken: TokenGetter;
+  key: string;
+}) {
+  await authorizedFetch("/api/admin/media", args.getToken, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      key: args.key,
+    }),
+  });
 }
 
 export async function updateInquiryStatus(args: {
@@ -197,4 +335,23 @@ export function describeContentSections(content: SiteContent) {
       note: "Public accountability messaging.",
     },
   ];
+}
+
+export function formatBytes(sizeBytes: number) {
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB", "GB"];
+  let value = sizeBytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)} ${
+    units[unitIndex]
+  }`;
 }

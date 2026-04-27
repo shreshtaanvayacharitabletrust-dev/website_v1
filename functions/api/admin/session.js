@@ -20,7 +20,11 @@ export async function onRequestGet({ env, request }) {
   return jsonResponse({
     allowlistEnabled: adminSession.allowlistEnabled,
     allowedEmails: adminSession.allowedEmails,
-    directusUrl: adminSession.directusUrl,
+    cacheConfigured: adminSession.cacheConfigured,
+    cmsProvider: adminSession.cmsProvider,
+    databaseConfigured: adminSession.databaseConfigured,
+    mediaBaseUrl: adminSession.mediaBaseUrl,
+    mediaConfigured: adminSession.mediaConfigured,
     user: {
       id: adminSession.user.id,
       email: adminSession.user.email,

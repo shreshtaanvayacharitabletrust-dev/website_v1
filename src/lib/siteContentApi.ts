@@ -35,7 +35,7 @@ function normalizePayload(payload: unknown): SiteContent {
     return defaultSiteContent;
   }
 
-  const data = Array.isArray(payload.data) ? payload.data[0] : payload.data;
+  const data = payload.data;
 
   if (!isRecord(data)) {
     return defaultSiteContent;
@@ -56,7 +56,9 @@ export async function fetchSiteContent(signal?: AbortSignal): Promise<SiteConten
     throw new Error(`Failed to load site content (${response.status})`);
   }
 
-  const payload = (await response.json()) as unknown;
+  return normalizePayload((await response.json()) as unknown);
+}
 
-  return normalizePayload(payload);
+export function mergeSiteContentWithDefaults(incoming: unknown): SiteContent {
+  return mergeWithDefaults(defaultSiteContent, incoming);
 }

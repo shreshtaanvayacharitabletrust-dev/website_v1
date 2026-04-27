@@ -737,7 +737,7 @@ export const defaultSiteContent: SiteContent = {
       "Thank you. Your inquiry has been submitted successfully.",
   },
   submissionSettings: {
-    databaseEnabled: false,
-    adminUrl: "https://admin.shreshtaanvayatrust.org",
+    databaseEnabled: true,
+    adminUrl: "/internal-admin/dashboard",
   },
 };

@@ -1,4 +1,5 @@
 import { createClerkClient } from "@clerk/backend";
+import { getAdminAllowlist, getPublicMediaBaseUrl } from "./cms.js";
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -110,9 +111,7 @@ export async function requireAdminSession(request, env) {
 
   const user = await clerkClient.users.getUser(auth.userId);
   const primaryEmail = getPrimaryEmail(user);
-  const allowedEmails = parseList(env.ADMIN_ALLOWED_EMAILS).map((item) =>
-    item.toLowerCase(),
-  );
+  const allowedEmails = getAdminAllowlist(env);
   const allowlistEnabled = allowedEmails.length > 0;
 
   if (allowlistEnabled && !allowedEmails.includes(primaryEmail)) {
@@ -131,7 +130,11 @@ export async function requireAdminSession(request, env) {
       allowlistEnabled,
       allowedEmails,
       auth,
-      directusUrl: env.DIRECTUS_URL || "https://admin.shreshtaanvayatrust.org",
+      cmsProvider: "cloudflare",
+      mediaBaseUrl: getPublicMediaBaseUrl(request, env),
+      mediaConfigured: Boolean(env.CMS_MEDIA_BUCKET),
+      databaseConfigured: Boolean(env.SITE_DB || env.SUBMISSIONS_DB),
+      cacheConfigured: Boolean(env.SITE_CONTENT_CACHE),
       primaryEmail,
       user: {
         createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,

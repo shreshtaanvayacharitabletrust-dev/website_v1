@@ -1,4 +1,5 @@
 import { requireAdminSession } from "../_lib/adminAuth.js";
+import { getSiteDb } from "../_lib/cms.js";
 
 const ALLOWED_KINDS = new Set([
   "contact",
@@ -33,7 +34,9 @@ function isValidEmail(value) {
 }
 
 export async function onRequestGet({ env, request }) {
-  if (!env.SUBMISSIONS_DB) {
+  const db = getSiteDb(env);
+
+  if (!db) {
     return jsonResponse(
       {
         error: "Submission database is not configured.",
@@ -48,7 +51,7 @@ export async function onRequestGet({ env, request }) {
     return response;
   }
 
-  const result = await env.SUBMISSIONS_DB.prepare(
+  const result = await db.prepare(
     `
       SELECT
         id,
@@ -74,7 +77,9 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
-  if (!env.SUBMISSIONS_DB) {
+  const db = getSiteDb(env);
+
+  if (!db) {
     return jsonResponse(
       {
         error: "Submission database is not configured.",
@@ -143,7 +148,7 @@ export async function onRequestPost({ env, request }) {
   const inquiryId = crypto.randomUUID();
   const createdAt = new Date().toISOString();
 
-  const statement = env.SUBMISSIONS_DB.prepare(
+  const statement = db.prepare(
     `
       INSERT INTO inquiries (
         id,
@@ -193,7 +198,9 @@ export async function onRequestPost({ env, request }) {
 }
 
 export async function onRequestPatch({ env, request }) {
-  if (!env.SUBMISSIONS_DB) {
+  const db = getSiteDb(env);
+
+  if (!db) {
     return jsonResponse(
       {
         error: "Submission database is not configured.",
@@ -244,7 +251,7 @@ export async function onRequestPatch({ env, request }) {
 
   const updatedAt = new Date().toISOString();
 
-  const result = await env.SUBMISSIONS_DB.prepare(
+  const result = await db.prepare(
     `
       UPDATE inquiries
       SET status = ?, updated_at = ?

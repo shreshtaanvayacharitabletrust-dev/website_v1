@@ -24,11 +24,9 @@ export interface AdminOutletContextValue {
 }
 
 function AdminAccessDeniedPage({
-  directusUrl,
   message,
   onSignOut,
 }: {
-  directusUrl: string;
   message: string;
   onSignOut: () => void;
 }) {
@@ -43,13 +41,8 @@ function AdminAccessDeniedPage({
               "This Clerk account is authenticated, but it is not currently approved for the protected admin workspace."}
           </p>
           <div className="admin-toolbar-actions">
-            <a
-              className="button button-accent"
-              href={directusUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Open Directus
+            <a className="button button-accent" href="/">
+              Return to website
             </a>
             <button className="button button-ghost" type="button" onClick={onSignOut}>
               Sign Out
@@ -165,7 +158,6 @@ function ConfiguredAdminLayout() {
   if (!outletContext) {
     return (
       <AdminAccessDeniedPage
-        directusUrl={content.submissionSettings.adminUrl}
         message={sessionState.message}
         onSignOut={() => {
           void signOut({ redirectUrl: "/internal-admin" });
@@ -202,13 +194,8 @@ function ConfiguredAdminLayout() {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <a
-            className="button button-accent"
-            href={outletContext.adminSession.directusUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Open Directus
+          <a className="button button-accent" href="/" target="_blank" rel="noreferrer">
+            Open Website
           </a>
           <button
             className="button button-ghost"

@@ -56,7 +56,6 @@ export default function GetInvolvedPage() {
     contactFormDefaults,
     getInvolvedPage,
     involvementSteps,
-    submissionSettings,
   } = content;
 
   const jumpToForm = (kind: InquiryKind) => {
@@ -82,16 +81,6 @@ export default function GetInvolvedPage() {
       "",
       formValues.message || contactFormDefaults.fallbackMessage,
     ];
-
-    if (!submissionSettings.databaseEnabled) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject,
-        bodyLines,
-      });
-
-      return;
-    }
 
     setSubmissionState({
       state: "submitting",
@@ -121,12 +110,18 @@ export default function GetInvolvedPage() {
         message: getInvolvedPage.inquirySuccessMessage,
       });
     } catch (error) {
+      window.location.href = buildMailtoUrl({
+        recipientEmail: contactFormDefaults.recipientEmail,
+        subject,
+        bodyLines,
+      });
+
       setSubmissionState({
         state: "error",
         message:
           error instanceof Error
-            ? error.message
-            : "The request could not be submitted right now.",
+            ? `${error.message} Opening your email app instead.`
+            : "The request service is unavailable. Opening your email app instead.",
       });
     }
   };

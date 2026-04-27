@@ -24,7 +24,6 @@ export default function Layout() {
     layout,
     navigation,
     socialLinks,
-    submissionSettings,
   } = content;
 
   useEffect(() => {
@@ -35,21 +34,6 @@ export default function Layout() {
     event.preventDefault();
 
     if (!newsletterEmail) {
-      return;
-    }
-
-    if (!submissionSettings.databaseEnabled) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject: layout.newsletterSubject,
-        bodyLines: [
-          "Hello,",
-          "",
-          "Please add the following email to newsletter updates:",
-          newsletterEmail,
-        ],
-      });
-
       return;
     }
 
@@ -72,12 +56,23 @@ export default function Layout() {
         message: layout.newsletterSuccessMessage,
       });
     } catch (error) {
+      window.location.href = buildMailtoUrl({
+        recipientEmail: contactFormDefaults.recipientEmail,
+        subject: layout.newsletterSubject,
+        bodyLines: [
+          "Hello,",
+          "",
+          "Please add the following email to newsletter updates:",
+          newsletterEmail,
+        ],
+      });
+
       setNewsletterStatus({
         state: "error",
         message:
           error instanceof Error
-            ? error.message
-            : "The signup could not be sent right now.",
+            ? `${error.message} Falling back to email signup.`
+            : "The signup service is unavailable. Falling back to email signup.",
       });
     }
   };

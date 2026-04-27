@@ -1,7 +1,5 @@
-DIRECTUS_URL=https://admin.shreshtaanvayatrust.org
-DIRECTUS_COLLECTION=site_content
-DIRECTUS_TOKEN=
 CLERK_PUBLISHABLE_KEY=pk_test_replace_me
 CLERK_SECRET_KEY=sk_test_replace_me
 CLERK_AUTHORIZED_PARTIES=http://localhost:5173,https://shreshtaanvayatrust.org
 ADMIN_ALLOWED_EMAILS=
+PUBLIC_MEDIA_BASE_URL=

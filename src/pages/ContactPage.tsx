@@ -10,7 +10,6 @@ export default function ContactPage() {
     contactMethods,
     contactPage,
     socialLinks,
-    submissionSettings,
   } = content;
   const [formValues, setFormValues] = useState({
     name: "",
@@ -37,16 +36,6 @@ export default function ContactPage() {
       "",
       formValues.message || contactFormDefaults.fallbackMessage,
     ];
-
-    if (!submissionSettings.databaseEnabled) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject: formValues.subject || contactFormDefaults.subject,
-        bodyLines,
-      });
-
-      return;
-    }
 
     setSubmissionState({
       state: "submitting",
@@ -76,12 +65,18 @@ export default function ContactPage() {
         message: contactPage.successMessage,
       });
     } catch (error) {
+      window.location.href = buildMailtoUrl({
+        recipientEmail: contactFormDefaults.recipientEmail,
+        subject: formValues.subject || contactFormDefaults.subject,
+        bodyLines,
+      });
+
       setSubmissionState({
         state: "error",
         message:
           error instanceof Error
-            ? error.message
-            : "The inquiry could not be submitted right now.",
+            ? `${error.message} Opening your email app instead.`
+            : "The inquiry service is unavailable. Opening your email app instead.",
       });
     }
   };

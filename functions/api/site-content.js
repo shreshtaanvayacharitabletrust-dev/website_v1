@@ -1,49 +1,37 @@
-function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=60",
-    },
-  });
-}
+import { jsonResponse, readStoredSiteContent } from "../_lib/cms.js";
 
 export async function onRequestGet({ env }) {
-  if (!env.DIRECTUS_URL) {
+  const result = await readStoredSiteContent(env);
+
+  if (!result.configured) {
     return jsonResponse(
       {
-        error: "Directus is not configured.",
+        error: "Site database is not configured.",
       },
       503,
+      "public, max-age=60",
     );
   }
 
-  const baseUrl = String(env.DIRECTUS_URL).replace(/\/$/, "");
-  const collection = env.DIRECTUS_COLLECTION || "site_content";
-  const url = new URL(`${baseUrl}/items/${collection}`);
-
-  url.searchParams.set("limit", "1");
-
-  const headers = {
-    Accept: "application/json",
-  };
-
-  if (env.DIRECTUS_TOKEN) {
-    headers.Authorization = `Bearer ${env.DIRECTUS_TOKEN}`;
+  if (!result.persisted || !result.content) {
+    return jsonResponse(
+      {
+        error: "Published site content is not available yet.",
+      },
+      404,
+      "public, max-age=60",
+    );
   }
 
-  const response = await fetch(url.toString(), {
-    headers,
-  });
-
-  const text = await response.text();
-
-  return new Response(text, {
-    status: response.status,
-    headers: {
-      "content-type":
-        response.headers.get("content-type") || "application/json; charset=utf-8",
-      "cache-control": "public, max-age=60",
+  return jsonResponse(
+    {
+      data: result.content,
+      meta: {
+        updatedAt: result.updatedAt,
+        updatedBy: result.updatedBy,
+      },
     },
-  });
+    200,
+    "public, max-age=60",
+  );
 }

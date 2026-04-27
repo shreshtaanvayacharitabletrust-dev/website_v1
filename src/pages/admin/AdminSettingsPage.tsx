@@ -4,16 +4,16 @@ import { useSiteContent } from "../../content/SiteContentProvider";
 
 export default function AdminSettingsPage() {
   const { adminSession } = useAdminOutletContext();
-  const { cmsLoaded, content } = useSiteContent();
+  const { cmsLoaded } = useSiteContent();
 
   return (
     <div className="admin-page-grid">
       <section className="surface-card admin-section-card">
         <p className="eyebrow">Settings</p>
-        <h2>Integration status</h2>
+        <h2>Cloudflare admin stack status</h2>
         <p>
-          Use this page to confirm the current admin stack configuration across
-          Clerk, Directus, and the Cloudflare-backed operational data layer.
+          Use this page to confirm the current admin stack across Clerk, D1, R2,
+          KV cache, and the protected admin routes.
         </p>
       </section>
 
@@ -22,38 +22,32 @@ export default function AdminSettingsPage() {
           <p className="eyebrow">Authentication</p>
           <h3>{isClerkConfigured ? "Clerk ready" : "Clerk missing"}</h3>
           <p>
-            `/internal-admin` is now a Clerk-based sign-in and sign-up entry route.
+            `/internal-admin` is the Clerk-based sign-in and sign-up entry route.
           </p>
         </article>
 
         <article className="surface-card admin-section-card">
-          <p className="eyebrow">CMS</p>
-          <h3>{cmsLoaded ? "Directus content loaded" : "Using local fallback content"}</h3>
-          <p>Directus URL: {adminSession.directusUrl}</p>
+          <p className="eyebrow">CMS storage</p>
+          <h3>{adminSession.databaseConfigured ? "D1 configured" : "D1 missing"}</h3>
+          <p>{cmsLoaded ? "Published content loaded from D1." : "Using bundled fallback content."}</p>
         </article>
 
         <article className="surface-card admin-section-card">
-          <p className="eyebrow">Operations data</p>
-          <h3>{content.submissionSettings.databaseEnabled ? "D1 active" : "Mail fallback active"}</h3>
-          <p>
-            Public inquiry forms submit into the Cloudflare-backed operations layer
-            when database storage is enabled.
-          </p>
+          <p className="eyebrow">Media storage</p>
+          <h3>{adminSession.mediaConfigured ? "R2 configured" : "R2 missing"}</h3>
+          <p>Media base URL: {adminSession.mediaBaseUrl}</p>
+        </article>
+
+        <article className="surface-card admin-section-card">
+          <p className="eyebrow">Cache</p>
+          <h3>{adminSession.cacheConfigured ? "KV configured" : "KV optional / missing"}</h3>
+          <p>Published content can be cached in Workers KV when the binding is present.</p>
         </article>
       </div>
 
       <section className="surface-card admin-section-card">
         <p className="eyebrow">Admin URLs</p>
         <div className="admin-link-grid">
-          <a
-            className="admin-utility-link"
-            href={adminSession.directusUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            <strong>Directus</strong>
-            <small>{adminSession.directusUrl}</small>
-          </a>
           <div className="admin-utility-link">
             <strong>Auth entry</strong>
             <small>/internal-admin</small>
@@ -63,8 +57,20 @@ export default function AdminSettingsPage() {
             <small>/internal-admin/dashboard</small>
           </div>
           <div className="admin-utility-link">
-            <strong>Inquiries API</strong>
-            <small>/api/inquiries</small>
+            <strong>Content API</strong>
+            <small>/api/admin/content</small>
+          </div>
+          <div className="admin-utility-link">
+            <strong>Media API</strong>
+            <small>/api/admin/media</small>
+          </div>
+          <div className="admin-utility-link">
+            <strong>Public content</strong>
+            <small>/api/site-content</small>
+          </div>
+          <div className="admin-utility-link">
+            <strong>Public media</strong>
+            <small>/api/media/:key</small>
           </div>
         </div>
       </section>
