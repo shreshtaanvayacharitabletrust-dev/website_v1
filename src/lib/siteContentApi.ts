@@ -44,6 +44,36 @@ function normalizePayload(payload: unknown): SiteContent {
   return mergeWithDefaults(defaultSiteContent, data);
 }
 
+function migrateLegacyCopy(content: SiteContent): SiteContent {
+  const nextContent: SiteContent = {
+    ...content,
+    contactPage: {
+      ...content.contactPage,
+      formSection: {
+        ...content.contactPage.formSection,
+      },
+    },
+  };
+
+  if (
+    nextContent.contactPage.formSection.intro
+      .toLowerCase()
+      .includes("draft an email")
+  ) {
+    nextContent.contactPage.formSection.intro =
+      "Use this form for volunteering, partnerships, support, or general questions.";
+  }
+
+  if (
+    nextContent.contactPage.submitButtonLabel.trim().toLowerCase() ===
+    "open email draft"
+  ) {
+    nextContent.contactPage.submitButtonLabel = "Send Inquiry";
+  }
+
+  return nextContent;
+}
+
 export async function fetchSiteContent(signal?: AbortSignal): Promise<SiteContent> {
   const response = await fetch("/api/site-content", {
     headers: {
@@ -56,9 +86,9 @@ export async function fetchSiteContent(signal?: AbortSignal): Promise<SiteConten
     throw new Error(`Failed to load site content (${response.status})`);
   }
 
-  return normalizePayload((await response.json()) as unknown);
+  return migrateLegacyCopy(normalizePayload((await response.json()) as unknown));
 }
 
 export function mergeSiteContentWithDefaults(incoming: unknown): SiteContent {
-  return mergeWithDefaults(defaultSiteContent, incoming);
+  return migrateLegacyCopy(mergeWithDefaults(defaultSiteContent, incoming));
 }

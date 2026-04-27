@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import SectionHeading from "../components/SectionHeading";
 import { useSiteContent } from "../content/SiteContentProvider";
-import { buildMailtoUrl, submitInquiry } from "../lib/submissions";
+import { submitInquiry } from "../lib/submissions";
 
 export default function ContactPage() {
   const { content } = useSiteContent();
@@ -28,14 +28,6 @@ export default function ContactPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const bodyLines = [
-      `Name: ${formValues.name || "Not provided"}`,
-      `Email: ${formValues.email || "Not provided"}`,
-      `Phone: ${formValues.phone || "Not provided"}`,
-      "",
-      formValues.message || contactFormDefaults.fallbackMessage,
-    ];
 
     setSubmissionState({
       state: "submitting",
@@ -65,18 +57,12 @@ export default function ContactPage() {
         message: contactPage.successMessage,
       });
     } catch (error) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject: formValues.subject || contactFormDefaults.subject,
-        bodyLines,
-      });
-
       setSubmissionState({
         state: "error",
         message:
           error instanceof Error
-            ? `${error.message} Opening your email app instead.`
-            : "The inquiry service is unavailable. Opening your email app instead.",
+            ? error.message
+            : "The inquiry could not be submitted right now.",
       });
     }
   };

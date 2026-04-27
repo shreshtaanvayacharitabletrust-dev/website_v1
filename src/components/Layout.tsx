@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useSiteContent } from "../content/SiteContentProvider";
-import { buildMailtoUrl, submitInquiry } from "../lib/submissions";
+import { submitInquiry } from "../lib/submissions";
 import BrandLogo from "./BrandLogo";
 import SocialGlyph from "./SocialGlyph";
 
@@ -56,23 +56,12 @@ export default function Layout() {
         message: layout.newsletterSuccessMessage,
       });
     } catch (error) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject: layout.newsletterSubject,
-        bodyLines: [
-          "Hello,",
-          "",
-          "Please add the following email to newsletter updates:",
-          newsletterEmail,
-        ],
-      });
-
       setNewsletterStatus({
         state: "error",
         message:
           error instanceof Error
-            ? `${error.message} Falling back to email signup.`
-            : "The signup service is unavailable. Falling back to email signup.",
+            ? error.message
+            : "The signup could not be sent right now.",
       });
     }
   };

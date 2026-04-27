@@ -3,7 +3,6 @@ import SectionHeading from "../components/SectionHeading";
 import IconSymbol from "../components/IconSymbol";
 import { useSiteContent } from "../content/SiteContentProvider";
 import {
-  buildMailtoUrl,
   submitInquiry,
   type InquiryKind,
 } from "../lib/submissions";
@@ -53,7 +52,6 @@ export default function GetInvolvedPage() {
   const { content } = useSiteContent();
   const {
     actionPaths,
-    contactFormDefaults,
     getInvolvedPage,
     involvementSteps,
   } = content;
@@ -73,14 +71,6 @@ export default function GetInvolvedPage() {
     event.preventDefault();
 
     const subject = `${inquiryKindLabel(formValues.kind)} request from the website`;
-    const bodyLines = [
-      `Interest type: ${inquiryKindLabel(formValues.kind)}`,
-      `Name: ${formValues.name || "Not provided"}`,
-      `Email: ${formValues.email || "Not provided"}`,
-      `Phone: ${formValues.phone || "Not provided"}`,
-      "",
-      formValues.message || contactFormDefaults.fallbackMessage,
-    ];
 
     setSubmissionState({
       state: "submitting",
@@ -110,18 +100,12 @@ export default function GetInvolvedPage() {
         message: getInvolvedPage.inquirySuccessMessage,
       });
     } catch (error) {
-      window.location.href = buildMailtoUrl({
-        recipientEmail: contactFormDefaults.recipientEmail,
-        subject,
-        bodyLines,
-      });
-
       setSubmissionState({
         state: "error",
         message:
           error instanceof Error
-            ? `${error.message} Opening your email app instead.`
-            : "The request service is unavailable. Opening your email app instead.",
+            ? error.message
+            : "The request could not be submitted right now.",
       });
     }
   };

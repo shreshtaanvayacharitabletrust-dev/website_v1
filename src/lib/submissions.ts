@@ -33,13 +33,3 @@ export async function submitInquiry(payload: InquiryPayload): Promise<void> {
     throw new Error(data?.error || "Submission failed");
   }
 }
-
-export function buildMailtoUrl(args: {
-  recipientEmail: string;
-  subject: string;
-  bodyLines: string[];
-}) {
-  const body = args.bodyLines.join("\n");
-
-  return `mailto:${args.recipientEmail}?subject=${encodeURIComponent(args.subject)}&body=${encodeURIComponent(body)}`;
-}
