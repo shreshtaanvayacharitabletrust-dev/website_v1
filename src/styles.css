@@ -1177,6 +1177,22 @@ textarea:focus-visible {
   gap: 0.8rem;
 }
 
+.admin-inline-select {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-inline-select select {
+  min-width: 10rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgba(34, 52, 52, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+}
+
 .admin-summary-card {
   padding: 1.15rem 1.2rem;
 }
@@ -1239,6 +1255,16 @@ textarea:focus-visible {
 .admin-status-closed {
   background: rgba(40, 127, 84, 0.12);
   color: #1f6a48;
+}
+
+.admin-status-used {
+  background: rgba(40, 127, 84, 0.12);
+  color: #1f6a48;
+}
+
+.admin-status-unused {
+  background: rgba(197, 142, 41, 0.14);
+  color: #8d641a;
 }
 
 .admin-message-block {

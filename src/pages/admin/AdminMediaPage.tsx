@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminOutletContext } from "../../admin/AdminLayout";
 import { formatAdminDate } from "../../admin/utils";
 import { useSiteContent } from "../../content/SiteContentProvider";
@@ -9,6 +9,8 @@ import {
   type AdminMediaAsset,
   uploadAdminMedia,
 } from "../../lib/adminApi";
+
+type UsageFilter = "all" | "in-use" | "unused";
 
 function currentVisualReferences(args: {
   heroImage: string;
@@ -29,10 +31,66 @@ function currentVisualReferences(args: {
   ];
 }
 
+function collectStringValues(value: unknown, results = new Set<string>()) {
+  if (typeof value === "string") {
+    const normalized = value.trim();
+
+    if (normalized) {
+      results.add(normalized);
+    }
+
+    return results;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectStringValues(item, results));
+    return results;
+  }
+
+  if (value && typeof value === "object") {
+    Object.values(value).forEach((item) => collectStringValues(item, results));
+  }
+
+  return results;
+}
+
+function normalizeUrlLike(value: string) {
+  try {
+    const url = new URL(value, window.location.origin);
+
+    return {
+      href: url.href,
+      pathname: decodeURIComponent(url.pathname),
+    };
+  } catch {
+    return {
+      href: value,
+      pathname: value,
+    };
+  }
+}
+
+function assetIsReferenced(item: AdminMediaAsset, references: string[]) {
+  const normalizedAsset = normalizeUrlLike(item.url);
+  const encodedKey = encodeURIComponent(item.key);
+
+  return references.some((reference) => {
+    const normalizedReference = normalizeUrlLike(reference);
+
+    return (
+      normalizedReference.href === normalizedAsset.href ||
+      normalizedReference.pathname === normalizedAsset.pathname ||
+      normalizedReference.pathname.endsWith(`/${item.key}`) ||
+      normalizedReference.pathname.endsWith(`/${encodedKey}`)
+    );
+  });
+}
+
 export default function AdminMediaPage() {
   const { adminSession, getToken } = useAdminOutletContext();
   const { content } = useSiteContent();
   const [items, setItems] = useState<AdminMediaAsset[]>([]);
+  const [usageFilter, setUsageFilter] = useState<UsageFilter>("all");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingKey, setDeletingKey] = useState("");
@@ -120,6 +178,45 @@ export default function AdminMediaPage() {
     })),
   });
 
+  const publishedReferences = useMemo(
+    () => Array.from(collectStringValues(content)),
+    [content],
+  );
+
+  const assetsWithUsage = useMemo(
+    () =>
+      items.map((item) => ({
+        ...item,
+        inUse: assetIsReferenced(item, publishedReferences),
+      })),
+    [items, publishedReferences],
+  );
+
+  const visibleItems = useMemo(
+    () =>
+      assetsWithUsage.filter((item) => {
+        if (usageFilter === "in-use") {
+          return item.inUse;
+        }
+
+        if (usageFilter === "unused") {
+          return !item.inUse;
+        }
+
+        return true;
+      }),
+    [assetsWithUsage, usageFilter],
+  );
+
+  const usageSummary = useMemo(
+    () => ({
+      total: assetsWithUsage.length,
+      inUse: assetsWithUsage.filter((item) => item.inUse).length,
+      unused: assetsWithUsage.filter((item) => !item.inUse).length,
+    }),
+    [assetsWithUsage],
+  );
+
   return (
     <div className="admin-page-grid">
       <section className="surface-card admin-section-card">
@@ -139,6 +236,7 @@ export default function AdminMediaPage() {
         <div className="admin-inline-meta">
           <span>Media base URL: {adminSession.mediaBaseUrl}</span>
           <span>{items.length} stored assets</span>
+          <span>{usageSummary.unused} unused assets can be cleaned up</span>
         </div>
         {feedback.message ? (
           <p
@@ -151,6 +249,21 @@ export default function AdminMediaPage() {
             {feedback.message}
           </p>
         ) : null}
+      </section>
+
+      <section className="admin-summary-row">
+        <article className="surface-card admin-summary-card">
+          <h3>Total assets</h3>
+          <p>{usageSummary.total}</p>
+        </article>
+        <article className="surface-card admin-summary-card">
+          <h3>In Use</h3>
+          <p>{usageSummary.inUse}</p>
+        </article>
+        <article className="surface-card admin-summary-card">
+          <h3>Unused</h3>
+          <p>{usageSummary.unused}</p>
+        </article>
       </section>
 
       <section className="surface-card admin-section-card">
@@ -209,12 +322,33 @@ export default function AdminMediaPage() {
         <div className="admin-section-header">
           <div>
             <p className="eyebrow">Media library</p>
-            <h3>Stored assets</h3>
+            <h3>Stored assets and cleanup</h3>
           </div>
-          <button className="button button-soft" type="button" onClick={() => void loadMedia()}>
-            Refresh
-          </button>
+          <div className="admin-toolbar-actions">
+            <label className="admin-inline-select">
+              Usage filter
+              <select
+                value={usageFilter}
+                onChange={(event) =>
+                  setUsageFilter(event.target.value as UsageFilter)
+                }
+              >
+                <option value="all">All assets</option>
+                <option value="in-use">In Use</option>
+                <option value="unused">Unused</option>
+              </select>
+            </label>
+            <button className="button button-soft" type="button" onClick={() => void loadMedia()}>
+              Refresh
+            </button>
+          </div>
         </div>
+
+        <p className="admin-help-copy">
+          Assets marked <strong>Unused</strong> are not currently referenced by the
+          published site content JSON and are the safest candidates to delete from
+          R2.
+        </p>
 
         {loading ? <p>Loading media assets...</p> : null}
 
@@ -222,19 +356,39 @@ export default function AdminMediaPage() {
           <p className="admin-empty-state">No R2 media assets have been uploaded yet.</p>
         ) : null}
 
+        {!loading && items.length > 0 && visibleItems.length === 0 ? (
+          <p className="admin-empty-state">
+            No assets match the current usage filter.
+          </p>
+        ) : null}
+
         <div className="admin-card-grid">
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             <article className="surface-card admin-section-card" key={item.key}>
               {item.mimeType.startsWith("image/") ? (
                 <img alt={item.title} className="admin-media-thumb" src={item.url} />
               ) : null}
-              <p className="eyebrow">{item.mimeType}</p>
+              <div className="admin-section-header">
+                <p className="eyebrow">{item.mimeType}</p>
+                <span
+                  className={`admin-status-pill ${
+                    item.inUse ? "admin-status-used" : "admin-status-unused"
+                  }`}
+                >
+                  {item.inUse ? "In Use" : "Unused"}
+                </span>
+              </div>
               <h3>{item.title}</h3>
               <div className="admin-inline-meta">
                 <span>{formatBytes(item.sizeBytes)}</span>
                 <span>{formatAdminDate(item.createdAt)}</span>
               </div>
               <p className="admin-copy-break">{item.url}</p>
+              <p className="admin-help-copy">
+                {item.inUse
+                  ? "Referenced by the current published content. Remove or replace that reference before deleting this asset."
+                  : "Not referenced by the current published content. Safe candidate for R2 cleanup."}
+              </p>
               <div className="admin-toolbar-actions">
                 <button
                   className="button button-soft"
@@ -252,7 +406,7 @@ export default function AdminMediaPage() {
                 <button
                   className="button button-ghost"
                   type="button"
-                  disabled={deletingKey === item.key}
+                  disabled={deletingKey === item.key || item.inUse}
                   onClick={() => {
                     setDeletingKey(item.key);
                     deleteAdminMedia({
@@ -280,7 +434,11 @@ export default function AdminMediaPage() {
                       .finally(() => setDeletingKey(""));
                   }}
                 >
-                  {deletingKey === item.key ? "Deleting..." : "Delete"}
+                  {item.inUse
+                    ? "In Use"
+                    : deletingKey === item.key
+                      ? "Deleting..."
+                      : "Delete"}
                 </button>
               </div>
             </article>
