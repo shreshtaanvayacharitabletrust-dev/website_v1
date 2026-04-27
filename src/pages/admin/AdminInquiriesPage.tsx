@@ -4,6 +4,7 @@ import { formatAdminDate, formatInquiryKind } from "../../admin/utils";
 import {
   buildInquiryCsv,
   buildDashboardSummary,
+  deleteAdminInquiry,
   downloadCsv,
   fetchAdminInquiries,
   updateInquiryStatus,
@@ -38,6 +39,7 @@ export default function AdminInquiriesPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | InquiryStatus>("all");
   const [kindFilter, setKindFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState("");
   const [error, setError] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -104,6 +106,28 @@ export default function AdminInquiriesPage() {
           ? nextError.message
           : "The inquiry status could not be updated.",
       );
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setError("");
+    setDeletingId(id);
+
+    try {
+      await deleteAdminInquiry({
+        getToken,
+        id,
+      });
+
+      setItems((current) => current.filter((item) => item.id !== id));
+    } catch (nextError) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : "The inquiry could not be deleted.",
+      );
+    } finally {
+      setDeletingId("");
     }
   };
 
@@ -265,6 +289,18 @@ export default function AdminInquiriesPage() {
                 onClick={() => void handleStatusUpdate(item.id, "closed")}
               >
                 Mark Closed
+              </button>
+              <button
+                className="button button-ghost"
+                type="button"
+                disabled={item.status !== "closed" || deletingId === item.id}
+                onClick={() => void handleDelete(item.id)}
+              >
+                {item.status !== "closed"
+                  ? "Close To Delete"
+                  : deletingId === item.id
+                    ? "Deleting..."
+                    : "Delete"}
               </button>
             </div>
           </article>

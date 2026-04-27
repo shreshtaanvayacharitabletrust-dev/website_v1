@@ -274,3 +274,92 @@ export async function onRequestPatch({ env, request }) {
     ok: true,
   });
 }
+
+export async function onRequestDelete({ env, request }) {
+  const db = getSiteDb(env);
+
+  if (!db) {
+    return jsonResponse(
+      {
+        error: "Submission database is not configured.",
+      },
+      503,
+    );
+  }
+
+  const { response } = await requireAdminSession(request, env);
+
+  if (response) {
+    return response;
+  }
+
+  let payload;
+
+  try {
+    payload = await request.json();
+  } catch {
+    return jsonResponse(
+      {
+        error: "Invalid JSON request body.",
+      },
+      400,
+    );
+  }
+
+  const inquiryId = normalizeText(payload.id, 64);
+
+  if (!inquiryId) {
+    return jsonResponse(
+      {
+        error: "An inquiry id is required.",
+      },
+      400,
+    );
+  }
+
+  const existing = await db.prepare(
+    `
+      SELECT status
+      FROM inquiries
+      WHERE id = ?
+      LIMIT 1
+    `,
+  )
+    .bind(inquiryId)
+    .first();
+
+  if (!existing) {
+    return jsonResponse(
+      {
+        error: "Inquiry not found.",
+      },
+      404,
+    );
+  }
+
+  if (existing.status !== "closed") {
+    return jsonResponse(
+      {
+        error: "Only closed inquiries can be deleted.",
+      },
+      400,
+    );
+  }
+
+  const result = await db.prepare("DELETE FROM inquiries WHERE id = ?")
+    .bind(inquiryId)
+    .run();
+
+  if (!result.success) {
+    return jsonResponse(
+      {
+        error: "The inquiry could not be deleted.",
+      },
+      500,
+    );
+  }
+
+  return jsonResponse({
+    ok: true,
+  });
+}

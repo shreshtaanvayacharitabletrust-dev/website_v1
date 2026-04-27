@@ -243,6 +243,21 @@ export async function updateInquiryStatus(args: {
   });
 }
 
+export async function deleteAdminInquiry(args: {
+  getToken: TokenGetter;
+  id: string;
+}) {
+  await authorizedFetch("/api/inquiries", args.getToken, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: args.id,
+    }),
+  });
+}
+
 export function buildDashboardSummary(items: AdminInquiry[]): DashboardSummary {
   return {
     total: items.length,
