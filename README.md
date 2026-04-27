@@ -4,8 +4,9 @@ Responsive NGO website built with `React`, `TypeScript`, and `Vite`.
 
 It now supports:
 
-- `Directus` as the website content admin
-- hidden `/internal-admin` operations panel for inquiries
+- `Clerk` for admin authentication
+- `Directus` as the website content backend
+- protected `/internal-admin/*` admin workspace
 - `Cloudflare Pages Functions` for API routes
 - `Cloudflare D1` for public form submissions
 
@@ -69,6 +70,16 @@ The hidden operations panel lives at:
 
 - `/internal-admin`
 
+Protected admin pages live under:
+
+- `/internal-admin/dashboard`
+- `/internal-admin/content`
+- `/internal-admin/media`
+- `/internal-admin/inquiries`
+- `/internal-admin/volunteers-partners`
+- `/internal-admin/users`
+- `/internal-admin/settings`
+
 Setup details are in:
 
 - `docs/admin-stack.md`
@@ -76,11 +87,13 @@ Setup details are in:
 ## Project structure
 
 - `src/App.tsx`: app routes
+- `src/admin/`: Clerk auth flow and admin shell
 - `src/components/`: shared UI building blocks
 - `src/content/`: CMS content types, fallback data, provider
 - `src/lib/`: Directus and inquiry API clients
 - `src/pages/`: homepage and interior pages
 - `functions/api/`: Cloudflare Pages Functions
+- `functions/_lib/`: shared server auth helpers
 - `cloudflare/d1/schema.sql`: inquiry storage schema
 - `src/styles.css`: visual system and responsive styles
 - `public/404.html`: SPA fallback for static hosting
@@ -90,4 +103,5 @@ Setup details are in:
 - Real NGO logo and photos are not available yet.
 - Contact details are placeholders and should be replaced later.
 - Directus is hosted separately from the public site.
-- The hidden admin route should be protected with Cloudflare Access in production.
+- Admin authentication is handled by Clerk.
+- `ADMIN_ALLOWED_EMAILS` should be configured in production if sign-up should not automatically allow admin access.

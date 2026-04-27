@@ -1,3 +1,5 @@
+import { requireAdminSession } from "../_lib/adminAuth.js";
+
 const ALLOWED_KINDS = new Set([
   "contact",
   "support",
@@ -30,16 +32,6 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function isAuthorizedAdmin(request, env) {
-  const expectedToken = normalizeText(env.ADMIN_PANEL_TOKEN, 200);
-
-  if (!expectedToken) {
-    return false;
-  }
-
-  return request.headers.get("x-admin-token") === expectedToken;
-}
-
 export async function onRequestGet({ env, request }) {
   if (!env.SUBMISSIONS_DB) {
     return jsonResponse(
@@ -50,13 +42,10 @@ export async function onRequestGet({ env, request }) {
     );
   }
 
-  if (!isAuthorizedAdmin(request, env)) {
-    return jsonResponse(
-      {
-        error: "Unauthorized.",
-      },
-      401,
-    );
+  const { response } = await requireAdminSession(request, env);
+
+  if (response) {
+    return response;
   }
 
   const result = await env.SUBMISSIONS_DB.prepare(
@@ -213,13 +202,10 @@ export async function onRequestPatch({ env, request }) {
     );
   }
 
-  if (!isAuthorizedAdmin(request, env)) {
-    return jsonResponse(
-      {
-        error: "Unauthorized.",
-      },
-      401,
-    );
+  const { response } = await requireAdminSession(request, env);
+
+  if (response) {
+    return response;
   }
 
   let payload;
